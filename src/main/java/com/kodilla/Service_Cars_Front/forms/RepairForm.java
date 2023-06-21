@@ -1,0 +1,67 @@
+package com.kodilla.Service_Cars_Front.forms;
+
+import com.kodilla.Service_Cars_Front.domain.RepairDto;
+import com.kodilla.Service_Cars_Front.service.RepairService;
+import com.kodilla.Service_Cars_Front.view.MainView;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
+import lombok.Getter;
+import lombok.Setter;
+
+
+@Getter
+@Setter
+public class RepairForm extends FormLayout {
+
+    private TextField carId = new TextField("Car Id");
+    private TextField startDate = new TextField("Start Date");
+    private TextField endDate = new TextField("End Date");
+    private NumberField totalCost = new NumberField("TotalCost");
+
+    private Button save = new Button("Save");
+    private Button update = new Button("Update");
+    private RepairService service = RepairService.getInstance();
+    private Binder<RepairDto> binder = new Binder<>(RepairDto.class);
+
+    private MainView mainView;
+
+    public RepairForm (MainView mainView) {
+
+        this.mainView = mainView;
+        save.addClickListener(event -> save());
+        update.addClickListener(event-> update());
+        binder.bindInstanceFields(this);
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        update.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add(carId,startDate,endDate,totalCost,save, update);
+    }
+
+    private void save() {
+        RepairDto repairDto = binder.getBean();
+        service.save(repairDto);
+        mainView.refresh();
+        setRepair(null);
+    }
+
+    private void update() {
+        RepairDto repairDto = binder.getBean();
+        service.update(repairDto);
+        mainView.refresh();
+        setRepair(null);
+    }
+
+    public void setRepair(RepairDto repairDto) {
+        binder.setBean(repairDto);
+
+        if (repairDto==null) {
+            setVisible(false);
+        } else {
+            setVisible(true);
+            startDate.focus();
+        }
+    }
+}

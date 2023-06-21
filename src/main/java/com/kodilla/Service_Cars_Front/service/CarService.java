@@ -1,0 +1,82 @@
+package com.kodilla.Service_Cars_Front.service;
+
+import com.kodilla.Service_Cars_Front.config.AppConfiguration;
+import com.kodilla.Service_Cars_Front.domain.CarDto;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class CarService {
+
+    private RestTemplate restTemplate = new RestTemplate();
+    private AppConfiguration appConfiguration = AppConfiguration.getInstance();
+    private JsonBuilder<CarDto> jsonBuilder = new JsonBuilder<>();
+
+    private List<CarDto> carDtos;
+    private static CarService carservice;
+
+    private CarService () {
+    }
+
+    public static CarService getInstance() {
+        if (carservice == null) {
+            carservice = new CarService();
+        }
+        return carservice;
+    }
+
+    public Set<CarDto> getCarDtos() {
+        return new HashSet<>(carDtos);
+    }
+
+    public void fetchAll() {
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfiguration.getBackendEndpoint()+"cars")
+                .encode()
+                .build()
+                .toUri();
+        Optional<CarDto[]> cars = Optional.ofNullable(restTemplate.getForObject(url,CarDto[].class));
+        carDtos = new ArrayList<>(cars
+                .map(Arrays::asList)
+                .orElse(new ArrayList<>()));
+    }
+
+
+    public List<CarDto> filterByPlateNumber (String filterString) {
+        return carDtos.stream()
+                .filter(c->c.getPlateNumber().contains(filterString))
+                .collect(Collectors.toList());
+    }
+
+    public List<CarDto> filterByVinNumber (String filterString) {
+        return carDtos.stream()
+                .filter(c->c.getVinNumber().contains(filterString))
+                .collect(Collectors.toList());
+    }
+
+    public List<CarDto> filterByCustomerId (String id) {
+        return carDtos.stream()
+                .filter(c->c.getCustomerId().equals(id))
+                .collect(Collectors.toList());
+    }
+
+    public void save(CarDto carDto) {
+        String url = appConfiguration.getBackendEndpoint()+"cars";
+        restTemplate.postForObject(url,(carDto),Void.class);
+    }
+
+    public void update(CarDto carDto) {
+        String url = appConfiguration.getBackendEndpoint()+"cars";
+        restTemplate.put(url,jsonBuilder.prepareJson(carDto));
+    }
+
+    public void delete(long id) {
+        URI url = UriComponentsBuilder.fromHttpUrl(appConfiguration.getBackendEndpoint()+"cars/"+id)
+                .encode()
+                .build()
+                .toUri();
+        restTemplate.delete(url);
+    }
+}
